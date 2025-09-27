@@ -1,0 +1,9 @@
+{
+  "method": "PUT",
+  "url": "{{API_BASE_URL}}/posts/{{POST_ID}}",
+  "headers": {
+    "Content-Type": "{{CONTENT_TYPE}}"
+  },
+  "body": "{\"id\": {{POST_ID}}, \"title\": \"Updated Post Title\", \"body\": \"This post was updated using environment variables\", \"userId\": {{USER_ID}}}",
+  "description": "Update post on JSONPlaceholder using environment variables"
+}

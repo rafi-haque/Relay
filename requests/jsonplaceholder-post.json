@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "url": "{{API_BASE_URL}}/posts/{{POST_ID}}",
+  "headers": {
+    "Content-Type": "{{CONTENT_TYPE}}"
+  },
+  "description": "Get post from JSONPlaceholder using environment variables"
+}

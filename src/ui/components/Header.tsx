@@ -28,24 +28,28 @@ export const Header: React.FC<HeaderProps> = ({
       flexShrink={0}
       flexDirection="column"
       paddingX={1}
+      paddingY={1}
     >
-      <Box justifyContent="center">
+      {/* Centered Logo */}
+      <Box justifyContent="center" width="100%">
         <Gradient colors={colors.gradient}>
           <Text>{displayLogo}</Text>
         </Gradient>
       </Box>
       
+      {/* Centered Version Info */}
       {showVersion && (
-        <Box justifyContent="flex-end">
+        <Box justifyContent="center" marginTop={1}>
           <Text color={colors.secondary}>
-            HTTP Client v{version}
+            🚀 Professional HTTP Client v{version} 🚀
           </Text>
         </Box>
       )}
 
-      <Box>
+      {/* Centered Quick Tips */}
+      <Box justifyContent="center" marginTop={1}>
         <Text color={colors.secondary}>
-          Use /help for commands • Try /file get-user.json
+          Press Ctrl+H for help • Ctrl+E to execute • Try /env load jsonplaceholder
         </Text>
       </Box>
     </Box>

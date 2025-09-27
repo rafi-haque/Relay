@@ -3,7 +3,7 @@
  * Orchestrates the entire application
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, useStdout } from 'ink';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
@@ -12,6 +12,7 @@ import { InputPrompt, HttpMethod } from './components/InputPrompt.js';
 import { ResponseHistory, HistoryEntry } from './components/ResponseHistory.js';
 import { LoadingScreen } from './components/LoadingScreen.js';
 import { RelayHttpClient, HttpResponse, HttpError } from '../core/http-client.js';
+import { EnvironmentManager } from '../core/environment-manager.js';
 
 const httpClient = new RelayHttpClient();
 
@@ -22,6 +23,7 @@ export const App: React.FC = () => {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [currentLoading, setCurrentLoading] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [environmentManager] = useState(() => new EnvironmentManager());
 
   const handleRequest = async (data: {
     method: HttpMethod;
@@ -31,11 +33,22 @@ export const App: React.FC = () => {
   }) => {
     const entryId = Date.now().toString();
     
-    // Create new history entry
+    // Substitute environment variables in request data
+    const processedData = {
+      ...data,
+      url: environmentManager.substituteVariables(data.url),
+      headers: Object.entries(data.headers).reduce((acc, [key, value]) => {
+        acc[key] = environmentManager.substituteVariables(value);
+        return acc;
+      }, {} as Record<string, string>),
+      body: data.body ? environmentManager.substituteVariables(data.body) : data.body
+    };
+    
+    // Create new history entry with processed data
     const newEntry: HistoryEntry = {
       id: entryId,
       timestamp: new Date(),
-      request: data,
+      request: processedData,
       loading: true
     };
     
@@ -45,10 +58,10 @@ export const App: React.FC = () => {
 
     try {
       const result = await httpClient.sendRequest({
-        method: data.method,
-        url: data.url,
-        headers: data.headers,
-        data: data.body ? JSON.parse(data.body) : undefined,
+        method: processedData.method,
+        url: processedData.url,
+        headers: processedData.headers,
+        data: processedData.body ? JSON.parse(processedData.body) : undefined,
       });
       
       // Update history entry with response
@@ -138,6 +151,7 @@ export const App: React.FC = () => {
           <InputPrompt 
             onSubmit={handleRequest} 
             onSaveResponse={handleSaveResponse}
+            environmentManager={environmentManager}
           />
         </Box>
       </Box>

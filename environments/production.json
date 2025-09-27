@@ -1,0 +1,13 @@
+{
+  "name": "production",
+  "description": "Production environment - use with caution!",
+  "variables": {
+    "API_BASE_URL": "https://api.example.com",
+    "AUTH_TOKEN": "",
+    "USER_ID": "",
+    "API_VERSION": "v2",
+    "CONTENT_TYPE": "application/json",
+    "TIMEOUT": "15000",
+    "API_KEY": ""
+  }
+}

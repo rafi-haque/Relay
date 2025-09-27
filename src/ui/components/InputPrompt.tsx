@@ -22,6 +22,7 @@ interface RequestBuilder {
 interface InputPromptProps {
   onSubmit: (data: RequestBuilder) => void;
   onSaveResponse?: (filename: string) => void;
+  environmentManager?: any; // Will be properly typed when imported
 }
 
 // Available slash commands
@@ -31,13 +32,14 @@ const COMMANDS = {
   '/header': 'Add a header (format: key:value)',
   '/body': 'Set request body (JSON)',
   '/file': 'Load request from JSON file (format: /file filename.json)',
-  '/execute': 'Execute the current request',
-  '/clear': 'Clear the current request',
-  '/save': 'Save last response to file (format: /save filename.json)',
-  '/help': 'Show available commands'
+  '/execute': 'Execute the current request (Ctrl+E)',
+  '/clear': 'Clear the current request (Ctrl+C)',
+  '/save': 'Save last response to file (Ctrl+S)',
+  '/env': 'Environment variables (Ctrl+L to list)',
+  '/help': 'Show available commands (Ctrl+H)'
 };
 
-export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveResponse }) => {
+export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveResponse, environmentManager }) => {
   const [currentInput, setCurrentInput] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
   const [requestBuilder, setRequestBuilder] = useState<RequestBuilder>({
@@ -51,6 +53,79 @@ export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveRespon
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  const handleEnvironmentCommand = (envCommand: string) => {
+    if (!environmentManager) {
+      setLastCommand('Environment manager not available');
+      return;
+    }
+
+    const parts = envCommand.split(' ');
+    const action = parts[0];
+
+    switch (action) {
+      case 'set':
+        if (parts.length >= 3) {
+          const key = parts[1];
+          const value = parts.slice(2).join(' ');
+          environmentManager.setVariable(key, value);
+          setLastCommand(`Environment variable '${key}' set to '${value}'`);
+        } else {
+          setLastCommand('Error: Usage: /env set <key> <value>');
+        }
+        break;
+
+      case 'get':
+        if (parts.length >= 2) {
+          const key = parts[1];
+          const value = environmentManager.getVariable(key);
+          if (value !== undefined) {
+            setLastCommand(`${key} = ${value}`);
+          } else {
+            setLastCommand(`Environment variable '${key}' not found`);
+          }
+        } else {
+          setLastCommand('Error: Usage: /env get <key>');
+        }
+        break;
+
+      case 'list':
+        const allVars = environmentManager.getAllVariables();
+        const varCount = Object.keys(allVars).length;
+        if (varCount === 0) {
+          setLastCommand('No environment variables set');
+        } else {
+          const varList = Object.entries(allVars)
+            .map(([key, value]) => `${key}=${value}`)
+            .join(', ');
+          setLastCommand(`Environment variables (${varCount}): ${varList}`);
+        }
+        break;
+
+      case 'clear':
+        environmentManager.clearVariables();
+        setLastCommand('All environment variables cleared');
+        break;
+
+      case 'load':
+        if (parts.length >= 2) {
+          const envName = parts[1];
+          const success = environmentManager.loadEnvironment(envName);
+          if (success) {
+            setLastCommand(`Loaded environment '${envName}'`);
+          } else {
+            setLastCommand(`Failed to load environment '${envName}'`);
+          }
+        } else {
+          setLastCommand('Error: Usage: /env load <environment-name>');
+        }
+        break;
+
+      default:
+        setLastCommand('Error: Available env commands: set, get, list, clear, load');
+        break;
+    }
+  };
 
   const getAvailableFiles = (): string[] => {
     try {
@@ -225,6 +300,13 @@ export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveRespon
       return;
     }
 
+    if (trimmed.startsWith('/env ')) {
+      const envCommand = trimmed.substring(5).trim();
+      handleEnvironmentCommand(envCommand);
+      setShowHelp(false);
+      return;
+    }
+
     // If no command matched and it's not empty, try as URL shortcut
     if (trimmed && !trimmed.startsWith('/')) {
       setRequestBuilder(prev => ({ ...prev, url: trimmed }));
@@ -266,6 +348,35 @@ export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveRespon
   };
 
   useInput((input, key) => {
+    // Handle keyboard shortcuts
+    if (key.ctrl) {
+      if (input === 'e') {
+        // Ctrl+E: Execute request
+        executeCommand('/execute');
+        return;
+      } else if (input === 'c' && !key.shift) {
+        // Ctrl+C: Clear request (without shift to avoid terminal interrupt)
+        executeCommand('/clear');
+        return;
+      } else if (input === 'h') {
+        // Ctrl+H: Show help
+        executeCommand('/help');
+        return;
+      } else if (input === 's') {
+        // Ctrl+S: Save response (if available)
+        if (onSaveResponse) {
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+          onSaveResponse(`response-${timestamp}.json`);
+          setLastCommand(`Saving response to response-${timestamp}.json`);
+        }
+        return;
+      } else if (input === 'l') {
+        // Ctrl+L: List environment variables
+        executeCommand('/env list');
+        return;
+      }
+    }
+
     if (key.return) {
       if (currentInput.trim()) {
         // Add to history
@@ -380,8 +491,43 @@ export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveRespon
             ))}
           </Box>
           <Box marginTop={1}>
+            <Gradient name="atlas">
+              <Text>⌨️  Keyboard Shortcuts</Text>
+            </Gradient>
+          </Box>
+          <Box marginTop={1} flexDirection="column">
+            <Box marginBottom={0}>
+              <Text color={colors.accent}>{'Ctrl+E'.padEnd(20)}</Text>
+              <Text color={colors.secondary}>Execute current request</Text>
+            </Box>
+            <Box marginBottom={0}>
+              <Text color={colors.accent}>{'Ctrl+C'.padEnd(20)}</Text>
+              <Text color={colors.secondary}>Clear current request</Text>
+            </Box>
+            <Box marginBottom={0}>
+              <Text color={colors.accent}>{'Ctrl+H'.padEnd(20)}</Text>
+              <Text color={colors.secondary}>Show/hide this help</Text>
+            </Box>
+            <Box marginBottom={0}>
+              <Text color={colors.accent}>{'Ctrl+S'.padEnd(20)}</Text>
+              <Text color={colors.secondary}>Save last response to file</Text>
+            </Box>
+            <Box marginBottom={0}>
+              <Text color={colors.accent}>{'Ctrl+L'.padEnd(20)}</Text>
+              <Text color={colors.secondary}>List environment variables</Text>
+            </Box>
+            <Box marginBottom={0}>
+              <Text color={colors.accent}>{'↑↓ Arrows'.padEnd(20)}</Text>
+              <Text color={colors.secondary}>Navigate command history</Text>
+            </Box>
+            <Box marginBottom={0}>
+              <Text color={colors.accent}>{'Tab'.padEnd(20)}</Text>
+              <Text color={colors.secondary}>Auto-complete commands/files</Text>
+            </Box>
+          </Box>
+          <Box marginTop={1}>
             <Text color={colors.secondary} dimColor>
-              💡 Tip: Type any command above to hide this help
+              💡 Tip: Type any command or press Ctrl+H to hide this help
             </Text>
           </Box>
         </Box>
@@ -415,10 +561,19 @@ export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveRespon
         </Box>
       )}
 
-      {/* Command history hint */}
-      {commandHistory.length > 0 && historyIndex === -1 && currentInput === '' && (
+      {/* Keyboard shortcuts hint */}
+      {currentInput === '' && !showHelp && (
         <Box marginTop={1}>
-          <Text color={colors.secondary} dimColor>↑↓ Navigate history • Tab to complete • /help for commands</Text>
+          <Text color={colors.secondary} dimColor>
+            Ctrl+E Execute • Ctrl+C Clear • Ctrl+H Help • Ctrl+S Save • Ctrl+L List vars • ↑↓ History
+          </Text>
+        </Box>
+      )}
+
+      {/* Command history hint when there's history but no shortcuts shown */}
+      {commandHistory.length > 0 && historyIndex === -1 && currentInput !== '' && (
+        <Box marginTop={1}>
+          <Text color={colors.secondary} dimColor>↑↓ Navigate history • Tab to complete</Text>
         </Box>
       )}
     </Box>

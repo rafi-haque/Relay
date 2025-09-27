@@ -1,7 +1,7 @@
 {
   "name": "relay-http-cli",
-  "version": "1.0.0",
-  "description": "A beautiful terminal HTTP client",
+  "version": "2.0.0",
+  "description": "Professional terminal HTTP client with environment variables and Postman-like features",
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.tsx",

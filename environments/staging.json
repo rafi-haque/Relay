@@ -1,0 +1,13 @@
+{
+  "name": "staging",
+  "description": "Staging environment for testing with production-like data",
+  "variables": {
+    "API_BASE_URL": "https://staging-api.example.com",
+    "AUTH_TOKEN": "staging-bearer-token-xyz789",
+    "USER_ID": "staging-user-456",
+    "API_VERSION": "v2",
+    "CONTENT_TYPE": "application/json",
+    "TIMEOUT": "10000",
+    "API_KEY": "staging-api-key-abc123"
+  }
+}

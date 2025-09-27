@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "url": "{{API_BASE_URL}}/users/{{USER_ID}}",
+  "headers": {
+    "Content-Type": "{{CONTENT_TYPE}}",
+    "Authorization": "Bearer {{AUTH_TOKEN}}"
+  },
+  "description": "Get user details using environment variables"
+}

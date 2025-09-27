@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "url": "{{API_BASE_URL}}/users",
+  "headers": {
+    "Content-Type": "{{CONTENT_TYPE}}",
+    "Authorization": "Bearer {{AUTH_TOKEN}}",
+    "X-API-Key": "{{API_KEY}}"
+  },
+  "body": "{\"name\": \"Test User\", \"email\": \"test@example.com\", \"userId\": \"{{USER_ID}}\"}",
+  "description": "Create a new user with environment variables"
+}

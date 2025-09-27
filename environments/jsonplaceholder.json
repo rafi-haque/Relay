@@ -1,0 +1,14 @@
+{
+  "name": "jsonplaceholder",
+  "description": "JSONPlaceholder API for testing and demos",
+  "variables": {
+    "API_BASE_URL": "https://jsonplaceholder.typicode.com",
+    "POST_ID": "4",
+    "USER_ID": "1",
+    "COMMENT_ID": "1",
+    "ALBUM_ID": "1",
+    "PHOTO_ID": "1",
+    "TODO_ID": "1",
+    "CONTENT_TYPE": "application/json"
+  }
+}
