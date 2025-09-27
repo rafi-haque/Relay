@@ -1,25 +1,38 @@
-# Ignore specific directories
-.github/
-.specify/
-specify/
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Common OS files
+# Build outputs
+dist/
+build/
+*.tgz
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+*.lcov
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Editor files
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-# Temporary files
-*.tmp
-*.temp
-.cache/
+# Logs
+logs/
+*.log

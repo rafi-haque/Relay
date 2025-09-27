@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "url": "https://jsonplaceholder.typicode.com/users/1",
+  "headers": {
+    "Accept": "application/json",
+    "User-Agent": "Relay-CLI/1.0.0"
+  }
+}

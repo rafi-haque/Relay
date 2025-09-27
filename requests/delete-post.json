@@ -1,0 +1,7 @@
+{
+  "method": "DELETE",
+  "url": "https://jsonplaceholder.typicode.com/posts/1",
+  "headers": {
+    "Accept": "application/json"
+  }
+}

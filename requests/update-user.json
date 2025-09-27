@@ -1,0 +1,9 @@
+{
+  "method": "PUT",
+  "url": "https://jsonplaceholder.typicode.com/users/1",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "body": "{\"name\": \"Updated User\", \"email\": \"updated@example.com\"}"
+}

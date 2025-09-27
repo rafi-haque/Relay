@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "url": "https://httpbin.org/bearer",
+  "headers": {
+    "Authorization": "Bearer your-token-here",
+    "Accept": "application/json"
+  }
+}
