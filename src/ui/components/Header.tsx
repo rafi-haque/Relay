@@ -28,7 +28,6 @@ export const Header: React.FC<HeaderProps> = ({
       flexShrink={0}
       flexDirection="column"
       paddingX={1}
-      paddingY={1}
     >
       <Box justifyContent="center">
         <Gradient colors={colors.gradient}>
@@ -37,14 +36,14 @@ export const Header: React.FC<HeaderProps> = ({
       </Box>
       
       {showVersion && (
-        <Box justifyContent="flex-end" marginTop={1}>
+        <Box justifyContent="flex-end">
           <Text color={colors.secondary}>
             HTTP Client v{version}
           </Text>
         </Box>
       )}
 
-      <Box marginTop={1}>
+      <Box>
         <Text color={colors.secondary}>
           Use /help for commands • Try /file get-user.json
         </Text>

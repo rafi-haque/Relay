@@ -50,40 +50,48 @@ const RequestBox: React.FC<{ entry: HistoryEntry; terminalWidth?: number }> = ({
   const { request, response, error, loading, timestamp } = entry;
   
   // Calculate dynamic URL truncation based on terminal width with more conservative approach
-  const urlMaxLength = Math.max(Math.floor(terminalWidth * 0.4), 25);
+  const urlMaxLength = Math.max(Math.floor(terminalWidth * 0.5), 30);
 
   return (
-    <Box flexDirection="column" marginBottom={1}>
+    <Box flexDirection="column" marginBottom={0}>
       {/* Request Info */}
       <Box borderStyle="round" borderColor={colors.primary} padding={1}>
         <Box flexDirection="column">
-          {/* Method, URL and Status - Minimal Gradients */}
+          {/* Header: Method, Timestamp, and Status on one line */}
           <Box>
-            <Text>
-              <Text color={colors.accent} bold>{request.method.toUpperCase()}</Text>
-              <Text color={colors.secondary}> • {formatTimestamp(timestamp)}</Text>
-            </Text>
-          </Box>
-          
-          <Box marginTop={1}>
-            <Text color={colors.primary}>{request.url.slice(0, urlMaxLength)}{request.url.length > urlMaxLength ? '...' : ''}</Text>
-          </Box>
-
-          {/* Status with Regular Colors */}
-          <Box marginTop={1}>
+            <Text color={colors.accent} bold>{request.method.toUpperCase()}</Text>
+            <Text color={colors.secondary}> • {formatTimestamp(timestamp)}</Text>
+            {response && (
+              <>
+                <Text color={colors.secondary}> • </Text>
+                <Text color={getStatusColor(response.status)} bold>
+                  {response.status} {response.statusText}
+                </Text>
+                <Text color={colors.secondary}> • {typeof response.data === 'object' ? 'JSON' : 'Text'}</Text>
+              </>
+            )}
             {loading && (
-              <Text color={colors.info}>⚡ Loading...</Text>
+              <>
+                <Text color={colors.secondary}> • </Text>
+                <Text color={colors.info}>Loading...</Text>
+              </>
             )}
             {error && (
-              <Text color={colors.error}>❌ {error.message}</Text>
+              <>
+                <Text color={colors.secondary}> • </Text>
+                <Text color={colors.error}>Error</Text>
+              </>
             )}
-            {response && (
-              <Text>
-                <Text color={getStatusColor(response.status)} bold>
-                  ✅ {response.status} {response.statusText} • {typeof response.data === 'object' ? 'JSON' : 'Text'}
-                </Text>
-              </Text>
-            )}
+          </Box>
+          
+          {/* URL on separate line */}
+          <Box>
+            <Text color={colors.primary}>
+              {request.url.length > urlMaxLength 
+                ? request.url.slice(0, urlMaxLength) + '...'
+                : request.url
+              }
+            </Text>
           </Box>
 
           {/* Response Content Preview - Gradient only for JSON keys */}
@@ -161,14 +169,14 @@ export const ResponseHistory: React.FC<ResponseHistoryProps> = ({ history }) => 
   const terminalHeight = stdout?.rows || 24;
   
   // Calculate available height for history (leave space for input and header)
-  const availableHeight = Math.max(terminalHeight - 15, 5);
-  const maxEntries = Math.max(Math.floor(availableHeight / 10), 1); // More conservative calculation
+  const availableHeight = Math.max(Math.min(terminalHeight - 15, 20), 5);
+  const maxEntries = Math.max(Math.floor(availableHeight / 8), 1); // More conservative calculation
 
   if (history.length === 0) {
     return (
-      <Box flexDirection="column" justifyContent="center" alignItems="center" minHeight={availableHeight}>
+      <Box flexDirection="column" paddingX={1} paddingY={2}>
         <Text color={colors.secondary} dimColor>
-          No requests yet. Use slash commands to get started!
+          Ready to make requests. Use slash commands to get started!
         </Text>
         <Box marginTop={1}>
           <Text color={colors.accent}>💡 Try: /url https://jsonplaceholder.typicode.com/posts/1</Text>
@@ -185,9 +193,13 @@ export const ResponseHistory: React.FC<ResponseHistoryProps> = ({ history }) => 
 
   return (
     <Box flexDirection="column" paddingX={1} width={Math.min(terminalWidth - 4, 100)}>
-      {/* Show recent entries that fit on screen - newest first */}
-      {history.slice().reverse().slice(0, maxEntries).map((entry) => (
-        <RequestBox key={entry.id} entry={entry} terminalWidth={Math.min(terminalWidth - 4, 100)} />
+      {/* Show current request/response only */}
+      {history.map((entry) => (
+        <RequestBox 
+          key={entry.id} 
+          entry={entry} 
+          terminalWidth={Math.min(terminalWidth - 4, 100)} 
+        />
       ))}
     </Box>
   );

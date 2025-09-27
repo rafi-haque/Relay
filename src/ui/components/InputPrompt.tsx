@@ -21,6 +21,7 @@ interface RequestBuilder {
 
 interface InputPromptProps {
   onSubmit: (data: RequestBuilder) => void;
+  onSaveResponse?: (filename: string) => void;
 }
 
 // Available slash commands
@@ -32,11 +33,11 @@ const COMMANDS = {
   '/file': 'Load request from JSON file (format: /file filename.json)',
   '/execute': 'Execute the current request',
   '/clear': 'Clear the current request',
-  '/full': 'Show last response in full (no truncation)',
+  '/save': 'Save last response to file (format: /save filename.json)',
   '/help': 'Show available commands'
 };
 
-export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit }) => {
+export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit, onSaveResponse }) => {
   const [currentInput, setCurrentInput] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
   const [requestBuilder, setRequestBuilder] = useState<RequestBuilder>({
@@ -203,6 +204,22 @@ export const InputPrompt: React.FC<InputPromptProps> = ({ onSubmit }) => {
         loadRequestFromFile(filename);
       } else {
         setLastCommand('Error: Filename is required. Usage: /file <filename.json>');
+      }
+      setShowHelp(false);
+      return;
+    }
+
+    if (trimmed.startsWith('/save ')) {
+      const filename = trimmed.substring(6).trim();
+      if (filename) {
+        if (onSaveResponse) {
+          onSaveResponse(filename);
+          setLastCommand(`Attempting to save response to ${filename}`);
+        } else {
+          setLastCommand('No response to save');
+        }
+      } else {
+        setLastCommand('Error: Filename is required. Usage: /save <filename.json>');
       }
       setShowHelp(false);
       return;

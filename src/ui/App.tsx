@@ -5,9 +5,12 @@
 
 import React, { useState } from 'react';
 import { Box, useStdout } from 'ink';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
 import { Header } from './components/Header.js';
 import { InputPrompt, HttpMethod } from './components/InputPrompt.js';
 import { ResponseHistory, HistoryEntry } from './components/ResponseHistory.js';
+import { LoadingScreen } from './components/LoadingScreen.js';
 import { RelayHttpClient, HttpResponse, HttpError } from '../core/http-client.js';
 
 const httpClient = new RelayHttpClient();
@@ -18,6 +21,7 @@ export const App: React.FC = () => {
   const rows = stdout?.rows || 24;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [currentLoading, setCurrentLoading] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleRequest = async (data: {
     method: HttpMethod;
@@ -35,8 +39,8 @@ export const App: React.FC = () => {
       loading: true
     };
     
-    // Add to history and set loading
-    setHistory(prev => [...prev, newEntry]);
+    // Clear previous history and show only the new request
+    setHistory([newEntry]);
     setCurrentLoading(entryId);
 
     try {
@@ -65,6 +69,57 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleSaveResponse = (filename: string) => {
+    if (history.length === 0) {
+      return;
+    }
+
+    const currentEntry = history[0]; // Since we only keep one entry now
+    if (!currentEntry.response) {
+      return;
+    }
+
+    try {
+      // Ensure filename has .json extension
+      const jsonFilename = filename.endsWith('.json') ? filename : filename + '.json';
+      const fullPath = join(process.cwd(), 'responses', jsonFilename);
+      
+      // Create responses directory if it doesn't exist
+      const responseDir = dirname(fullPath);
+      if (!existsSync(responseDir)) {
+        mkdirSync(responseDir, { recursive: true });
+      }
+
+      // Save the response data
+      const responseData = {
+        timestamp: currentEntry.timestamp,
+        request: currentEntry.request,
+        response: {
+          status: currentEntry.response.status,
+          statusText: currentEntry.response.statusText,
+          headers: currentEntry.response.headers,
+          data: currentEntry.response.data
+        }
+      };
+
+      writeFileSync(fullPath, JSON.stringify(responseData, null, 2));
+      console.log(`Response saved to ${fullPath}`);
+    } catch (error) {
+      console.error('Failed to save response:', error);
+    }
+  };
+
+  // Show loading screen first
+  if (isLoading) {
+    return (
+      <LoadingScreen 
+        terminalWidth={columns} 
+        onComplete={() => setIsLoading(false)}
+        duration={1800}
+      />
+    );
+  }
+
   return (
     <Box flexDirection="column" minHeight={rows}>
       {/* Header - Fixed at top */}
@@ -78,9 +133,12 @@ export const App: React.FC = () => {
       </Box>
       
       {/* Fixed Input at Bottom */}
-      <Box flexShrink={0} paddingX={1} paddingBottom={1}>
+      <Box flexShrink={0} paddingX={1}>
         <Box borderStyle="round" borderColor="#6366f1" padding={1}>
-          <InputPrompt onSubmit={handleRequest} />
+          <InputPrompt 
+            onSubmit={handleRequest} 
+            onSaveResponse={handleSaveResponse}
+          />
         </Box>
       </Box>
     </Box>
